@@ -14,6 +14,9 @@
         private static Guid GetEnvVarGuid(string name, string fallback) =>
             Guid.TryParse(Environment.GetEnvironmentVariable(name), out var v) ? v : Guid.Parse(fallback);
 
+        private static T GetEnvVarEnum<T>(string name, T fallback) where T : struct, Enum =>
+            Enum.TryParse<T>(Environment.GetEnvironmentVariable(name), ignoreCase: true, out var v) ? v : fallback;
+
         // URLs
         public static string API_BACK_URL => GetEnvVar("API_BACK_URL", "https://localhost:7125");
         public static string API_FRONT_URL => GetEnvVar("API_FRONT_URL", "http://localhost:4200");
@@ -55,6 +58,29 @@
         // path-style URL of the S3 gateway itself.
         public static string S3_PUBLIC_URL =>
             GetEnvVar("S3_PUBLIC_URL", $"{S3_SERVICE_URL.TrimEnd('/')}/{S3_BUCKET}");
+
+        // False when the gateway refuses anonymous GETs (SeaweedFS started with an S3 config
+        // file, private R2 bucket, ...). Public objects then fall back to long-lived signed URLs.
+        public static bool S3_PUBLIC_READ => GetEnvVarBool("S3_PUBLIC_READ", true);
+
+        // Storage (shared by both IStorageService implementations)
+        // Backend used when a call doesn't name one explicitly.
+        public static StorageProviderEnum STORAGE_PROVIDER =>
+            GetEnvVarEnum("STORAGE_PROVIDER", StorageProviderEnum.Local);
+
+        // Local backend roots. Public files sit under wwwroot and are served by UseStaticFiles;
+        // private files sit outside it so they can only be reached through a signed URL.
+        public static string STORAGE_PUBLIC_FOLDER => GetEnvVar("STORAGE_PUBLIC_FOLDER", "uploads");
+        public static string STORAGE_PRIVATE_ROOT => GetEnvVar("STORAGE_PRIVATE_ROOT", "storage");
+
+        public static int MAX_UPLOAD_SIZE_MB => GetEnvVarInt("MAX_UPLOAD_SIZE_MB", 25);
+        public static long MaxUploadSizeBytes => MAX_UPLOAD_SIZE_MB * 1024L * 1024L;
+
+        public static string ALLOWED_EXTENSIONS =>
+            GetEnvVar("ALLOWED_EXTENSIONS", ".jpg,.jpeg,.png,.webp,.gif,.pdf,.docx,.xlsx,.csv,.txt,.mp4");
+
+        // Lifetime of the signed links handed out for private objects.
+        public static int SIGNED_URL_MINUTES => GetEnvVarInt("SIGNED_URL_MINUTES", 15);
 
         // emails + PASSWORDS
         public static string DO_NOT_REPLY_EMAIL => GetEnvVar("DO_NOT_REPLY_EMAIL", "ne-pas-repondre@boilerplate.fr");

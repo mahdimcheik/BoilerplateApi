@@ -48,4 +48,21 @@
         Video,
     }
 
+    /// <summary>Storage backend. Not persisted — used only to pick an IStorageService.</summary>
+    public enum StorageProviderEnum
+    {
+        Local,
+        S3,
+    }
+
+    /// <summary>
+    /// Whether an object is anonymously readable. Encoded as the first segment of every
+    /// storage key ("public/..." or "private/..."), so a key alone identifies its visibility.
+    /// </summary>
+    public enum StorageVisibilityEnum
+    {
+        Private,
+        Public,
+    }
+
 }

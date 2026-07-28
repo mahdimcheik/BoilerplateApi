@@ -41,6 +41,11 @@ bld/
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
+# Uploaded content (LocalStorageService): keep the folders, ignore what lands in them
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+storage/
+
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 

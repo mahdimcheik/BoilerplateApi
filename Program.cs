@@ -3,10 +3,12 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
 using BoilerPlateApi.Contexts;
+using BoilerPlateApi.Models.Responses;
 using BoilerPlateApi.Models.Users;
 using BoilerPlateApi.Services;
 using BoilerPlateApi.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -18,6 +20,13 @@ DotNetEnv.Env.NoClobber().TraversePath().Load();
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
+
+// Uploads. The transport cap is a backstop, not the business rule: it sits one MB above
+// MAX_UPLOAD_SIZE_MB so multipart boundary/header bytes can't push a file that is exactly at
+// the limit over it, and so StorageHelper is the thing that actually reports 413.
+var uploadCeiling = EnvironmentVariables.MaxUploadSizeBytes + 1024L * 1024L;
+builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = uploadCeiling);
+services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = uploadCeiling);
 
 services.AddDbContext<MainContext>(options =>
     options.UseNpgsql(EnvironmentVariables.ConnectionString));
@@ -81,12 +90,21 @@ services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(
         ServiceURL = EnvironmentVariables.S3_SERVICE_URL,
         AuthenticationRegion = EnvironmentVariables.S3_REGION,
         ForcePathStyle = true,
+        // Presigned URLs are built from this flag, not from ServiceURL's scheme: leaving it
+        // false hands out https:// links for a plaintext gateway (the SeaweedFS dev default).
+        UseHttp = EnvironmentVariables.S3_SERVICE_URL.StartsWith("http://", StringComparison.OrdinalIgnoreCase),
         RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
         ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED,
     }));
 
 services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<MailService>();
+
+// Both storage backends are registered; IStorageResolver picks one per call so objects stored
+// before a provider switch stay reachable. STORAGE_PROVIDER is only the default.
+services.AddScoped<IStorageService, LocalStorageService>();
+services.AddScoped<IStorageService, S3StorageService>();
+services.AddScoped<IStorageResolver, StorageResolver>();
 
 services
     .AddControllers()
@@ -135,6 +153,29 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors();
+
+// A body over the transport ceiling never reaches the action: model binding turns the failed
+// form read into an opaque ProblemDetails 400 before any exception can be caught. Reject on the
+// declared length instead — the body is never read — so "too big" always comes back as the same
+// Response<T> envelope and 413 the storage services return just under the ceiling.
+app.Use(async (context, next) =>
+{
+    if (context.Request.ContentLength > uploadCeiling)
+    {
+        context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+        await context.Response.WriteAsJsonAsync(new Response<object>
+        {
+            Status = StatusCodes.Status413PayloadTooLarge,
+            Message = $"Fichier trop volumineux (maximum {EnvironmentVariables.MAX_UPLOAD_SIZE_MB} Mo).",
+        });
+        return;
+    }
+
+    await next();
+});
+// After UseCors so public files carry CORS headers for a frontend fetch(); nothing under
+// wwwroot is private — the local backend keeps private objects outside it entirely.
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
