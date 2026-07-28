@@ -1,0 +1,6 @@
+@BoilerPlateApi_HostAddress = http://localhost:5268
+
+GET {{BoilerPlateApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
