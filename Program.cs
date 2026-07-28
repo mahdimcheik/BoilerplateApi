@@ -1,7 +1,3 @@
-// ---- Configuration ----
-// Load the local .env before anything reads EnvironmentVariables. NoClobber:
-// real process/container env vars always win over the file (prod, CI, Docker).
-// TraversePath: also found when the CWD is a subdirectory (EF tools, tests).
 using BoilerPlateApi.Contexts;
 using BoilerPlateApi.Models.Users;
 using BoilerPlateApi.Services;
@@ -19,11 +15,8 @@ DotNetEnv.Env.NoClobber().TraversePath().Load();
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
-// ---- Database ----
 services.AddDbContext<MainContext>(options =>
     options.UseNpgsql(EnvironmentVariables.ConnectionString));
-
-// ---- Identity ----
 services
     .AddIdentity<UserApp, RoleApp>(options =>
     {
@@ -45,7 +38,6 @@ services
 
 services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromHours(2));
 
-// ---- Authentication (JWT) ----
 services
     .AddAuthentication(options =>
     {
@@ -68,7 +60,6 @@ services
         };
     });
 
-// ---- CORS ----
 services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
         policy.SetIsOriginAllowed(CorsHelper.IsOriginAllowed)
@@ -76,26 +67,51 @@ services.AddCors(options =>
             .AllowAnyHeader()
             .AllowCredentials()));
 
-// ---- App services ----
 services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<MailService>();
 
-// ---- Controllers + Swagger ----
 services
     .AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 services.AddEndpointsApiExplorer();
 
+services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "BoilerPlate API",
+        Version = "v1",
+    });
+
+    options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Paste the raw JWT only - the UI adds the \"Bearer \" prefix itself.",
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("bearer", document)] = [],
+    });
+});
 
 var app = builder.Build();
 
-// Apply migrations + seed the default super admin at startup.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<MainContext>();
     db.Database.Migrate();
     await SeedSuperAdmin(scope.ServiceProvider);
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "BoilerPlate API v1"));
 }
 
 app.UseHttpsRedirection();
