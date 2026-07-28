@@ -10,7 +10,7 @@ namespace BoilerPlateApi.Controllers
     [Produces("application/json")]
     [Route("[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class MediasController : ControllerBase
     {
         private readonly IStorageResolver _storage;

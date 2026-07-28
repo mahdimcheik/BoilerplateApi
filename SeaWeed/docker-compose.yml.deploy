@@ -26,9 +26,13 @@ services:
   filer:
     image: chrislusf/seaweedfs:latest
     container_name: seaweedfs-filer
-    command: "filer -master=master:9333 -ip=filer -s3"
+    # Without -s3.config the gateway has no identities and rejects every signed request, which
+    # is all the AWS SDK sends. CHANGE the credentials in s3.json before deploying — they are
+    # dev placeholders and must match S3_ACCESS_KEY / S3_SECRET_KEY in the API's .env.
+    command: "filer -master=master:9333 -ip=filer -s3 -s3.config=/etc/seaweedfs/s3.json"
     volumes:
       - filer_data:/data
+      - ./s3.json:/etc/seaweedfs/s3.json:ro
     depends_on:
       - master
       - volume

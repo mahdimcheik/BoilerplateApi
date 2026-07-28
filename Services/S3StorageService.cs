@@ -29,13 +29,16 @@ namespace BoilerPlateApi.Services
         private static string Bucket => EnvironmentVariables.S3_BUCKET;
 
         /// <summary>
-        /// An unreachable or failing endpoint surfaces as a transport exception, not an
-        /// AmazonS3Exception — the SDK rethrows HttpRequestException once retries are exhausted.
-        /// Those must come back as 503 rather than an unhandled 500 that leaks a stack trace.
+        /// True only when the endpoint was never reached: the SDK rethrows HttpRequestException
+        /// once retries are exhausted, and an AmazonServiceException carrying no status code
+        /// never got a response. Deliberately narrow — an S3 error that *did* come back over
+        /// HTTP is a configuration or permission problem and must not be reported as an outage
+        /// (a signed request rejected by a misconfigured gateway looked exactly like a dead one).
         /// </summary>
-        private static bool IsUnavailable(Exception ex) =>
-            ex is AmazonServiceException or HttpRequestException or TaskCanceledException ||
-            ex.InnerException is HttpRequestException or AmazonServiceException;
+        private static bool IsUnreachable(Exception ex) =>
+            ex is HttpRequestException or TaskCanceledException ||
+            ex.InnerException is HttpRequestException ||
+            ex is AmazonServiceException { StatusCode: 0 };
 
         // ---- Upload ----
 
@@ -75,10 +78,15 @@ namespace BoilerPlateApi.Services
                         key, Provider, req.Visibility, url, req.File.FileName, contentType, req.File.Length),
                 };
             }
-            catch (Exception ex) when (IsUnavailable(ex))
+            catch (Exception ex) when (IsUnreachable(ex))
             {
-                _logger.LogError(ex, "S3 upload failed for key {Key} on {Endpoint}", key, EnvironmentVariables.S3_SERVICE_URL);
+                _logger.LogError(ex, "S3 endpoint unreachable for key {Key} on {Endpoint}", key, EnvironmentVariables.S3_SERVICE_URL);
                 return Fail<StoredFile>(503, "Stockage indisponible.");
+            }
+            catch (AmazonServiceException ex)
+            {
+                _logger.LogError(ex, "S3 rejected upload of {Key}: {ErrorCode} {Message}", key, ex.ErrorCode, ex.Message);
+                return Fail<StoredFile>(502, "Erreur du service de stockage.");
             }
             catch (Exception ex)
             {
@@ -114,10 +122,15 @@ namespace BoilerPlateApi.Services
             {
                 return Fail<StoredFileStream>(404, "Fichier introuvable.");
             }
-            catch (Exception ex) when (IsUnavailable(ex))
+            catch (Exception ex) when (IsUnreachable(ex))
             {
-                _logger.LogError(ex, "S3 download failed for key {Key}", key);
+                _logger.LogError(ex, "S3 endpoint unreachable for key {Key}", key);
                 return Fail<StoredFileStream>(503, "Stockage indisponible.");
+            }
+            catch (AmazonServiceException ex)
+            {
+                _logger.LogError(ex, "S3 rejected download of {Key}: {ErrorCode} {Message}", key, ex.ErrorCode, ex.Message);
+                return Fail<StoredFileStream>(502, "Erreur du service de stockage.");
             }
         }
 
@@ -138,10 +151,15 @@ namespace BoilerPlateApi.Services
                 await _s3.DeleteObjectAsync(Bucket, key, ct);
                 return new Response<object> { Status = 200, Message = "Fichier supprimé." };
             }
-            catch (Exception ex) when (IsUnavailable(ex))
+            catch (Exception ex) when (IsUnreachable(ex))
             {
-                _logger.LogError(ex, "S3 delete failed for key {Key}", key);
+                _logger.LogError(ex, "S3 endpoint unreachable for key {Key}", key);
                 return Fail<object>(503, "Stockage indisponible.");
+            }
+            catch (AmazonServiceException ex)
+            {
+                _logger.LogError(ex, "S3 rejected delete of {Key}: {ErrorCode} {Message}", key, ex.ErrorCode, ex.Message);
+                return Fail<object>(502, "Erreur du service de stockage.");
             }
         }
 
@@ -161,9 +179,9 @@ namespace BoilerPlateApi.Services
                     Data = await BuildUrl(key, ttl),
                 };
             }
-            catch (Exception ex) when (IsUnavailable(ex))
+            catch (Exception ex) when (IsUnreachable(ex))
             {
-                _logger.LogError(ex, "S3 presign failed for key {Key}", key);
+                _logger.LogError(ex, "S3 endpoint unreachable while presigning {Key}", key);
                 return Fail<string>(503, "Stockage indisponible.");
             }
         }
@@ -182,10 +200,15 @@ namespace BoilerPlateApi.Services
             {
                 return new Response<bool> { Status = 404, Message = "Fichier introuvable.", Data = false };
             }
-            catch (Exception ex) when (IsUnavailable(ex))
+            catch (Exception ex) when (IsUnreachable(ex))
             {
-                _logger.LogError(ex, "S3 metadata lookup failed for key {Key}", key);
+                _logger.LogError(ex, "S3 endpoint unreachable for key {Key}", key);
                 return Fail<bool>(503, "Stockage indisponible.");
+            }
+            catch (AmazonServiceException ex)
+            {
+                _logger.LogError(ex, "S3 rejected metadata lookup of {Key}: {ErrorCode} {Message}", key, ex.ErrorCode, ex.Message);
+                return Fail<bool>(502, "Erreur du service de stockage.");
             }
         }
 

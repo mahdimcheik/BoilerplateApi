@@ -1,0 +1,26 @@
+{
+  "identities": [
+    {
+      "name": "anonymous",
+      "actions": [
+        "Read:medias/public/*"
+      ]
+    },
+    {
+      "name": "boilerplate",
+      "credentials": [
+        {
+          "accessKey": "dummy-key",
+          "secretKey": "dummy-secret"
+        }
+      ],
+      "actions": [
+        "Admin",
+        "Read",
+        "Write",
+        "List",
+        "Tagging"
+      ]
+    }
+  ]
+}

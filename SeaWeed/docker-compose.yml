@@ -30,9 +30,14 @@
       - "8888:8888"      # Port HTTP du Filer
       - "18888:18888"    # Port gRPC
       - "8333:8333"      # Port de l'API S3 (très utile pour ASP.NET Core)
-    command: "filer -master=master:9333 -ip=filer -s3"
+    # -s3.config is required, not optional: started with a bare -s3 the gateway has no identities
+    # and rejects every SigV4-signed request ("Signed request requires setting up SeaweedFS S3
+    # authentication"), which is all the AWS SDK ever sends. The keys in s3.json must match
+    # S3_ACCESS_KEY / S3_SECRET_KEY in .env.
+    command: "filer -master=master:9333 -ip=filer -s3 -s3.config=/etc/seaweedfs/s3.json"
     volumes:
       - filer_data:/data
+      - ./s3.json:/etc/seaweedfs/s3.json:ro
     depends_on:
       - master
       - volume
