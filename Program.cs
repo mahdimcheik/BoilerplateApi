@@ -1,3 +1,7 @@
+using Amazon.Runtime;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.S3.Util;
 using BoilerPlateApi.Contexts;
 using BoilerPlateApi.Models.Users;
 using BoilerPlateApi.Services;
@@ -67,6 +71,20 @@ services.AddCors(options =>
             .AllowAnyHeader()
             .AllowCredentials()));
 
+// S3 client pointed at the SeaweedFS S3 gateway (filer -s3, port 8333).
+// ForcePathStyle: SeaweedFS addresses buckets as /<bucket>/<key>, not as subdomains.
+// Checksums are opt-in: the SDK's default CRC32 trailers are rejected by SeaweedFS.
+services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(
+    new BasicAWSCredentials(EnvironmentVariables.S3_ACCESS_KEY, EnvironmentVariables.S3_SECRET_KEY),
+    new AmazonS3Config
+    {
+        ServiceURL = EnvironmentVariables.S3_SERVICE_URL,
+        AuthenticationRegion = EnvironmentVariables.S3_REGION,
+        ForcePathStyle = true,
+        RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
+        ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED,
+    }));
+
 services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<MailService>();
 
@@ -105,6 +123,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<MainContext>();
     db.Database.Migrate();
     await SeedSuperAdmin(scope.ServiceProvider);
+    await EnsureBucket(scope.ServiceProvider);
 }
 
 if (app.Environment.IsDevelopment())
@@ -144,4 +163,27 @@ static async Task SeedSuperAdmin(IServiceProvider provider)
     var result = await userManager.CreateAsync(admin, EnvironmentVariables.SUPER_ADMIN_PASSWORD);
     if (result.Succeeded)
         await userManager.AddToRoleAsync(admin, HardCode.ROLE_NAME_SUPER_ADMIN);
+}
+
+// Creates the bucket on first boot. Storage is best-effort: an unreachable
+// SeaweedFS logs a warning instead of taking the whole API down.
+static async Task EnsureBucket(IServiceProvider provider)
+{
+    var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("Storage");
+    var s3 = provider.GetRequiredService<IAmazonS3>();
+    var bucket = EnvironmentVariables.S3_BUCKET;
+
+    try
+    {
+        if (await AmazonS3Util.DoesS3BucketExistV2Async(s3, bucket))
+            return;
+
+        await s3.PutBucketAsync(new PutBucketRequest { BucketName = bucket });
+        logger.LogInformation("Bucket S3 '{Bucket}' créé sur {Endpoint}.", bucket, EnvironmentVariables.S3_SERVICE_URL);
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "Stockage S3 indisponible sur {Endpoint} - bucket '{Bucket}' non vérifié.",
+            EnvironmentVariables.S3_SERVICE_URL, bucket);
+    }
 }

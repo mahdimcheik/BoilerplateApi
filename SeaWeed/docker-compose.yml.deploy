@@ -1,0 +1,50 @@
+﻿version: '3.8'
+
+services:
+  master:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs-master
+    command: "master -ip=master -peers=master:9333"
+    volumes:
+      - master_data:/data
+    networks:
+      - seaweed_internal
+    restart: unless-stopped
+
+  volume:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs-volume
+    command: "volume -mserver=master:9333 -ip=volume -port=8080"
+    volumes:
+      - volume_data:/data
+    depends_on:
+      - master
+    networks:
+      - seaweed_internal
+    restart: unless-stopped
+
+  filer:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs-filer
+    command: "filer -master=master:9333 -ip=filer -s3"
+    volumes:
+      - filer_data:/data
+    depends_on:
+      - master
+      - volume
+    networks:
+      - seaweed_internal   # Communique avec Master et Volume
+      - global_network     # Communique avec les autres conteneurs (ex: API, frontend)
+    restart: unless-stopped
+
+volumes:
+  master_data:
+  volume_data:
+  filer_data:
+
+networks:
+  seaweed_internal:
+    driver: bridge
+    internal: true # Rend le réseau strictement privé (pas d'accès internet sortant/entrant pour ces conteneurs)
+  global_network:
+    external: true # Indique que ce réseau existe déjà au niveau du moteur Docker

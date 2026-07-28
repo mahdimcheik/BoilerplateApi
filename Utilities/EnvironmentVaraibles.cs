@@ -43,6 +43,19 @@
         public static string SMTP_LOGIN => GetEnvVar("SMTP_LOGIN", "");
         public static string SMTP_KEY => GetEnvVar("SMTP_KEY", "");
 
+        // Object storage (SeaweedFS S3 gateway — filer started with -s3, port 8333).
+        // Any S3-compatible endpoint works; keep ForcePathStyle on for non-AWS providers.
+        public static string S3_SERVICE_URL => GetEnvVar("S3_SERVICE_URL", "http://localhost:8333");
+        public static string S3_ACCESS_KEY => GetEnvVar("S3_ACCESS_KEY", "dummy-key");
+        public static string S3_SECRET_KEY => GetEnvVar("S3_SECRET_KEY", "dummy-secret");
+        public static string S3_BUCKET => GetEnvVar("S3_BUCKET", "medias");
+        public static string S3_REGION => GetEnvVar("S3_REGION", "us-east-1");
+
+        // Base URL used to build public links to stored objects. Defaults to the
+        // path-style URL of the S3 gateway itself.
+        public static string S3_PUBLIC_URL =>
+            GetEnvVar("S3_PUBLIC_URL", $"{S3_SERVICE_URL.TrimEnd('/')}/{S3_BUCKET}");
+
         // emails + PASSWORDS
         public static string DO_NOT_REPLY_EMAIL => GetEnvVar("DO_NOT_REPLY_EMAIL", "ne-pas-repondre@boilerplate.fr");
         public static string NOTIFICATION_EMAIL => GetEnvVar("NOTIFICATION_EMAIL", "notification@boilerplate.fr");

@@ -207,10 +207,10 @@ namespace BoilerPlateApi.Services
             if (user is null)
             {
                 // First-time Google sign-in => account creation. Role is required here.
-                if (req.Role is not RoleEnum.Technician and not RoleEnum.Client)
+                if (req.Role is not RoleEnum.Client)
                     return Fail<LoginResponse>(
                         400,
-                        "Le rôle (Technician ou Client) est requis pour créer un compte."
+                        "Le rôle (Client) est requis pour créer un compte."
                     );
 
                 if (!req.DataProcessingConsent || !req.PrivacyPolicyConsent)

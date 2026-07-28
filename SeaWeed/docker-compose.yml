@@ -1,0 +1,44 @@
+﻿services:
+  master:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs-master
+    ports:
+      - "9333:9333"      # Port HTTP de l'interface Master
+      - "19333:19333"    # Port gRPC
+    command: "master -ip=master -peers=master:9333"
+    volumes:
+      - master_data:/data
+    restart: unless-stopped
+
+  volume:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs-volume
+    ports:
+      - "8080:8080"      # Port HTTP du noeud de volume
+      - "18080:18080"    # Port gRPC
+    command: "volume -mserver=master:9333 -ip=volume -port=8080"
+    volumes:
+      - volume_data:/data
+    depends_on:
+      - master
+    restart: unless-stopped
+
+  filer:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs-filer
+    ports:
+      - "8888:8888"      # Port HTTP du Filer
+      - "18888:18888"    # Port gRPC
+      - "8333:8333"      # Port de l'API S3 (très utile pour ASP.NET Core)
+    command: "filer -master=master:9333 -ip=filer -s3"
+    volumes:
+      - filer_data:/data
+    depends_on:
+      - master
+      - volume
+    restart: unless-stopped
+
+volumes:
+  master_data:
+  volume_data:
+  filer_data:
