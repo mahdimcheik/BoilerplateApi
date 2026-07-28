@@ -47,13 +47,6 @@ namespace BoilerPlateApi.Contexts
                 },
                 new RoleApp
                 {
-                    Id = HardCode.ROLE_TECHNICIAN,
-                    Name = HardCode.ROLE_NAME_TECHNICIAN,
-                    NormalizedName = HardCode.ROLE_NAME_TECHNICIAN.ToUpperInvariant(),
-                    ConcurrencyStamp = HardCode.ROLE_TECHNICIAN.ToString(),
-                },
-                new RoleApp
-                {
                     Id = HardCode.ROLE_CLIENT,
                     Name = HardCode.ROLE_NAME_CLIENT,
                     NormalizedName = HardCode.ROLE_NAME_CLIENT.ToUpperInvariant(),

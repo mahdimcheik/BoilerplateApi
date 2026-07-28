@@ -5,7 +5,6 @@
         // Roles — stable GUIDs used to seed the RoleApp table.
         public static Guid ROLE_SUPER_ADMIN => Guid.Parse("a0000000-0000-0000-0000-000000000001");
         public static Guid ROLE_ADMIN => Guid.Parse("a0000000-0000-0000-0000-000000000002");
-        public static Guid ROLE_TECHNICIAN => Guid.Parse("a0000000-0000-0000-0000-000000000003");
         public static Guid ROLE_CLIENT => Guid.Parse("a0000000-0000-0000-0000-000000000004");
 
         // Account statuses (StatusAccount lookup table).
@@ -16,7 +15,6 @@
         // Role names as used by Identity (RoleApp.Name) and JWT role claims.
         public const string ROLE_NAME_SUPER_ADMIN = "SuperAdmin";
         public const string ROLE_NAME_ADMIN = "Admin";
-        public const string ROLE_NAME_TECHNICIAN = "Technician";
         public const string ROLE_NAME_CLIENT = "Client";
     }
 
@@ -25,7 +23,6 @@
     {
         SuperAdmin,
         Admin,
-        Technician,
         Client,
     }
 

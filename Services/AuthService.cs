@@ -54,9 +54,6 @@ namespace BoilerPlateApi.Services
 
         public async Task<Response<UserDetails>> Register(RegisterRequest req, CancellationToken ct)
         {
-            if (req.Role != RoleEnum.Technician && req.Role != RoleEnum.Client)
-                return Fail<UserDetails>(400, "Le rôle doit être Technician ou Client.");
-
             if (!req.DataProcessingConsent || !req.PrivacyPolicyConsent)
                 return Fail<UserDetails>(400, "Le consentement est obligatoire.");
 
@@ -528,7 +525,6 @@ namespace BoilerPlateApi.Services
         private static string RoleName(RoleEnum role) =>
             role switch
             {
-                RoleEnum.Technician => HardCode.ROLE_NAME_TECHNICIAN,
                 RoleEnum.Client => HardCode.ROLE_NAME_CLIENT,
                 RoleEnum.Admin => HardCode.ROLE_NAME_ADMIN,
                 _ => HardCode.ROLE_NAME_SUPER_ADMIN,
