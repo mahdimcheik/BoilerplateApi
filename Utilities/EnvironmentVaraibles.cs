@@ -82,6 +82,29 @@
         // Lifetime of the signed links handed out for private objects.
         public static int SIGNED_URL_MINUTES => GetEnvVarInt("SIGNED_URL_MINUTES", 15);
 
+        // Background jobs (Hangfire). Storage lives in the same PostgreSQL database as the
+        // application, in its own schema, so nothing collides with the EF migrations.
+        public static bool HANGFIRE_ENABLED => GetEnvVarBool("HANGFIRE_ENABLED", true);
+        public static string HANGFIRE_SCHEMA => GetEnvVar("HANGFIRE_SCHEMA", "hangfire");
+
+        // False on instances that should only enqueue jobs and never execute them (a web tier
+        // scaled out behind a single dedicated worker, for example).
+        public static bool HANGFIRE_SERVER_ENABLED => GetEnvVarBool("HANGFIRE_SERVER_ENABLED", true);
+
+        // 0 keeps Hangfire's own default (ProcessorCount * 5).
+        public static int HANGFIRE_WORKER_COUNT => GetEnvVarInt("HANGFIRE_WORKER_COUNT", 0);
+
+        // How long finished jobs stay visible in the dashboard before being purged.
+        public static int HANGFIRE_RETENTION_DAYS => GetEnvVarInt("HANGFIRE_RETENTION_DAYS", 7);
+
+        // Dashboard. Browsers can't attach the API's bearer token, so it is gated by HTTP Basic
+        // instead (see Utilities/HangfireDashboardAuthorization.cs). An empty password means
+        // "no credentials configured" and the dashboard is then served in Development only.
+        public static bool HANGFIRE_DASHBOARD_ENABLED => GetEnvVarBool("HANGFIRE_DASHBOARD_ENABLED", true);
+        public static string HANGFIRE_DASHBOARD_PATH => GetEnvVar("HANGFIRE_DASHBOARD_PATH", "/hangfire");
+        public static string HANGFIRE_DASHBOARD_USER => GetEnvVar("HANGFIRE_DASHBOARD_USER", "admin");
+        public static string HANGFIRE_DASHBOARD_PASSWORD => GetEnvVar("HANGFIRE_DASHBOARD_PASSWORD", "");
+
         // emails + PASSWORDS
         public static string DO_NOT_REPLY_EMAIL => GetEnvVar("DO_NOT_REPLY_EMAIL", "ne-pas-repondre@boilerplate.fr");
         public static string NOTIFICATION_EMAIL => GetEnvVar("NOTIFICATION_EMAIL", "notification@boilerplate.fr");

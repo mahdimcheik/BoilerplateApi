@@ -7,6 +7,8 @@ using BoilerPlateApi.Models.Responses;
 using BoilerPlateApi.Models.Users;
 using BoilerPlateApi.Services;
 using BoilerPlateApi.Utilities;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
@@ -99,6 +101,39 @@ services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(
 
 services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<MailService>();
+services.AddScoped<IJobService, JobService>();
+
+// Hangfire. Job state is stored in the application's own PostgreSQL database but in a separate
+// schema, so its tables never show up in — or get dropped by — the EF migrations. The schema is
+// created on first use; there is nothing to add to `dotnet ef migrations`.
+if (EnvironmentVariables.HANGFIRE_ENABLED)
+{
+    services.AddHangfire(config => config
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UsePostgreSqlStorage(
+            connection => connection.UseNpgsqlConnection(EnvironmentVariables.ConnectionString),
+            new PostgreSqlStorageOptions
+            {
+                SchemaName = EnvironmentVariables.HANGFIRE_SCHEMA,
+                PrepareSchemaIfNecessary = true,
+                QueuePollInterval = TimeSpan.FromSeconds(15),
+            })
+        .WithJobExpirationTimeout(TimeSpan.FromDays(EnvironmentVariables.HANGFIRE_RETENTION_DAYS)));
+
+    // Separate from the client registration above: an instance can enqueue jobs without
+    // processing any, which is what lets the API scale out behind a single worker.
+    if (EnvironmentVariables.HANGFIRE_SERVER_ENABLED)
+    {
+        services.AddHangfireServer(options =>
+        {
+            options.ServerName = $"{Environment.MachineName}:{Environment.ProcessId}";
+            if (EnvironmentVariables.HANGFIRE_WORKER_COUNT > 0)
+                options.WorkerCount = EnvironmentVariables.HANGFIRE_WORKER_COUNT;
+        });
+    }
+}
 
 // Both storage backends are registered; IStorageResolver picks one per call so objects stored
 // before a provider switch stay reachable. STORAGE_PROVIDER is only the default.
@@ -180,7 +215,38 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+// Mapped after the EF migration block above so the Hangfire schema is prepared against a database
+// that already exists. The dashboard has its own Basic-auth filter — it is not covered by the JWT
+// pipeline, since a browser can't attach a bearer token to a plain navigation.
+if (EnvironmentVariables.HANGFIRE_ENABLED)
+{
+    if (EnvironmentVariables.HANGFIRE_DASHBOARD_ENABLED)
+    {
+        app.MapHangfireDashboard(EnvironmentVariables.HANGFIRE_DASHBOARD_PATH, new DashboardOptions
+        {
+            DashboardTitle = "BoilerPlate — Tâches de fond",
+            Authorization = [new HangfireDashboardAuthorization(app.Environment.IsDevelopment())],
+        });
+    }
+
+    RegisterRecurringJobs(app.Services);
+}
+
 app.Run();
+
+// AddOrUpdate is idempotent and keyed by job id, so every instance can run this on boot: the
+// definition is overwritten, not duplicated. Removing a job here does NOT remove it from storage —
+// delete it from the dashboard (or via IRecurringJobManager.RemoveIfExists) as well.
+static void RegisterRecurringJobs(IServiceProvider provider)
+{
+    var recurringJobs = provider.GetRequiredService<IRecurringJobManager>();
+
+    recurringJobs.AddOrUpdate<IJobService>(
+        "purge-expired-refresh-tokens",
+        job => job.PurgeExpiredRefreshTokens(CancellationToken.None),
+        Cron.Daily(3),
+        new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+}
 
 static async Task SeedSuperAdmin(IServiceProvider provider)
 {
