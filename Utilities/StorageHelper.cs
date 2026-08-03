@@ -1,8 +1,8 @@
-using BoilerPlateApi.Models.Responses;
+using InteractivesApi.Models.Responses;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace BoilerPlateApi.Utilities
+namespace InteractivesApi.Utilities
 {
     /// <summary>
     /// Key building, upload validation and URL signing shared by every IStorageService

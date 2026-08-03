@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BoilerPlateApi.Models.Users
+namespace InteractivesApi.Models.Users
 {
     public class RefreshToken
     {

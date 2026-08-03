@@ -1,9 +1,9 @@
-﻿using BoilerPlateApi.Contexts;
-using BoilerPlateApi.Models.Users;
+﻿using InteractivesApi.Contexts;
+using InteractivesApi.Models.Users;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace BoilerPlateApi.Utilities
+namespace InteractivesApi.Utilities
 {
     public static class CheckUser
     {

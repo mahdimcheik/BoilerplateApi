@@ -1,4 +1,4 @@
-namespace BoilerPlateApi.Utilities
+namespace InteractivesApi.Utilities
 {
     /// <summary>
     /// Magic-number check: the first bytes of the uploaded stream must match the extension the

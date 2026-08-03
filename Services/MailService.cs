@@ -1,12 +1,12 @@
-﻿using BoilerPlateApi.Models.MailModels;
-using BoilerPlateApi.Utilities;
+﻿using InteractivesApi.Models.MailModels;
+using InteractivesApi.Utilities;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 using MimeKit.Text;
 using RazorLight;
 
-namespace BoilerPlateApi.Services
+namespace InteractivesApi.Services
 {
     public class MailService
     {

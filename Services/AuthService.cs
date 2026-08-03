@@ -1,7 +1,7 @@
-﻿    using BoilerPlateApi.Contexts;
-    using BoilerPlateApi.Models.Responses;
-    using BoilerPlateApi.Models.Users;
-    using BoilerPlateApi.Utilities;
+﻿    using InteractivesApi.Contexts;
+    using InteractivesApi.Models.Responses;
+    using InteractivesApi.Models.Users;
+    using InteractivesApi.Utilities;
     using Google.Apis.Auth;
     using Microsoft.AspNetCore.Identity;
     using Microsoft.EntityFrameworkCore;
@@ -11,7 +11,7 @@
     using System.Text;
     using System.Web;
 
-namespace BoilerPlateApi.Services
+namespace InteractivesApi.Services
 {
     public interface IAuthService
     {

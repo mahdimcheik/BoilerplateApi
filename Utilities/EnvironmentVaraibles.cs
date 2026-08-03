@@ -1,4 +1,4 @@
-﻿namespace BoilerPlateApi.Utilities
+﻿namespace InteractivesApi.Utilities
 {
     public static class EnvironmentVariables
     {

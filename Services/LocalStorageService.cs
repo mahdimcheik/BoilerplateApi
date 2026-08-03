@@ -1,8 +1,8 @@
-using BoilerPlateApi.Models.Responses;
-using BoilerPlateApi.Models.Storage;
-using BoilerPlateApi.Utilities;
+using InteractivesApi.Models.Responses;
+using InteractivesApi.Models.Storage;
+using InteractivesApi.Utilities;
 
-namespace BoilerPlateApi.Services
+namespace InteractivesApi.Services
 {
     /// <summary>
     /// Disk backend. Public objects land under wwwroot and are served by UseStaticFiles; private

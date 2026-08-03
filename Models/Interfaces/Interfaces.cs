@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BoilerPlateApi.Models.Interfaces
+namespace InteractivesApi.Models.Interfaces
 {
     public interface IArchivable
     {

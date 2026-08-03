@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace BoilerPlateApi.Migrations
+namespace InteractivesApi.Migrations
 {
     /// <inheritdoc />
     public partial class DropTechnicianRole : Migration

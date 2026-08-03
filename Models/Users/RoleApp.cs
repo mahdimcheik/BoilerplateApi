@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace BoilerPlateApi.Models.Users
+namespace InteractivesApi.Models.Users
 {
     public class RoleApp : IdentityRole<Guid>
     {

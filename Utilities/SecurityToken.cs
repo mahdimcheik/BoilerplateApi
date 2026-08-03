@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace BoilerPlateApi.Utilities
+namespace InteractivesApi.Utilities
 {
     public static class SecurityTokens
     {

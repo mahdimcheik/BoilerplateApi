@@ -1,12 +1,12 @@
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
-using BoilerPlateApi.Models.Responses;
-using BoilerPlateApi.Models.Storage;
-using BoilerPlateApi.Utilities;
+using InteractivesApi.Models.Responses;
+using InteractivesApi.Models.Storage;
+using InteractivesApi.Utilities;
 using System.Net;
 
-namespace BoilerPlateApi.Services
+namespace InteractivesApi.Services
 {
     /// <summary>
     /// S3-compatible backend, driven by the IAmazonS3 client configured in Program.cs (SeaweedFS

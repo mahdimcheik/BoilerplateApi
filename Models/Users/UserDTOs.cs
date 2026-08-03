@@ -1,7 +1,7 @@
-﻿using BoilerPlateApi.Utilities;
+﻿using InteractivesApi.Utilities;
 using System.ComponentModel.DataAnnotations;
 
-namespace BoilerPlateApi.Models.Users
+namespace InteractivesApi.Models.Users
 {
     /// <summary>Payload to register a new local account (technician or client).</summary>
     public class RegisterRequest

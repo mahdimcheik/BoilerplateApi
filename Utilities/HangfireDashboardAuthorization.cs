@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace BoilerPlateApi.Utilities
+namespace InteractivesApi.Utilities
 {
     /// <summary>
     /// Gate in front of the Hangfire dashboard. The API authenticates with a bearer JWT, but the

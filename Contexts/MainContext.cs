@@ -1,9 +1,9 @@
-﻿using BoilerPlateApi.Models.Users;
-using BoilerPlateApi.Utilities;
+﻿using InteractivesApi.Models.Users;
+using InteractivesApi.Utilities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace BoilerPlateApi.Contexts
+namespace InteractivesApi.Contexts
 {
     public class MainContext : IdentityDbContext<UserApp, RoleApp, Guid>
     {

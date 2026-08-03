@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BoilerPlateApi.Models.Responses
+namespace InteractivesApi.Models.Responses
 {
     public class Response<T>
     {

@@ -1,11 +1,11 @@
-using BoilerPlateApi.Models.Responses;
-using BoilerPlateApi.Models.Storage;
-using BoilerPlateApi.Services;
-using BoilerPlateApi.Utilities;
+using InteractivesApi.Models.Responses;
+using InteractivesApi.Models.Storage;
+using InteractivesApi.Services;
+using InteractivesApi.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BoilerPlateApi.Controllers
+namespace InteractivesApi.Controllers
 {
     [Produces("application/json")]
     [Route("[controller]")]

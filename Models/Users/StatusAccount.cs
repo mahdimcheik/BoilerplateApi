@@ -1,6 +1,6 @@
-﻿using BoilerPlateApi.Models.Interfaces;
+﻿using InteractivesApi.Models.Interfaces;
 
-namespace BoilerPlateApi.Models.Users
+namespace InteractivesApi.Models.Users
 {
     public class StatusAccount : BaseModelOption
     {

@@ -1,8 +1,8 @@
-using BoilerPlateApi.Contexts;
+using InteractivesApi.Contexts;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 
-namespace BoilerPlateApi.Services
+namespace InteractivesApi.Services
 {
     /// <summary>
     /// Work executed by Hangfire workers rather than during a request. Methods are resolved

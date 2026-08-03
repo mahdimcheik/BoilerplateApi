@@ -1,10 +1,10 @@
-﻿using BoilerPlateApi.Models.Interfaces;
-using BoilerPlateApi.Utilities;
+﻿using InteractivesApi.Models.Interfaces;
+using InteractivesApi.Utilities;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BoilerPlateApi.Models.Users
+namespace InteractivesApi.Models.Users
 {
     public class UserApp : IdentityUser<Guid>, IArchivable, IUpdateable, ICreatable
     {

@@ -1,4 +1,4 @@
-﻿namespace BoilerPlateApi.Models.MailModels
+﻿namespace InteractivesApi.Models.MailModels
 {
     public class MailApp
     {
